@@ -203,9 +203,7 @@ public class MasulsaAgent   {
 
 #### 스프링이 컴포넌트 스캔을 하는 방법
 
-- 컴포넌트 스캔으로 빈으로 등록할 후보 클래스 정보를 찾는데 사용
-- ClassPathScanningCandidateComponentProvider -> SimpleMetadataReader 
-- ASM 사용
-- ClassReader 와 Visitor 사용해서 클래스에 있는 메타 정보를 읽어온다.
+- 컴포넌트 스캔으로 빈으로 등록할 후보 클래스 정보를 찾는데 사용 (ASM 사용)
+  - ClassPathScanningCandidateComponentProvider -> SimpleMetadataReader(ClassReader 와 Visitor 구현체 사용 하여 메타 데이터를 읽는다.) 
 
 > https://www.youtube.com/watch?v=39kdr1mNZ_s
