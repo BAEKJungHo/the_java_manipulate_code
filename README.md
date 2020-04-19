@@ -309,6 +309,11 @@ public class App {
   
 ### 나만의 DI 프레임워크 만들기
 
+```java
+@Retention(RetentionPolicy.RUNTIME)
+public @interface Inject { }
+```
+
 - @Inject 라는 어노테이션  만들어서 필드 주입 해주는 컨테이너 서비스 만들기
 
 ```java
@@ -323,7 +328,36 @@ public class BookService {
 - ContainerService.java
 
 ```java
-public static <T> getObject(T classType)
+public static <T> getObject(Class<T> classType)
+```
+
+```java
+public class ContainerService {
+  
+  public static <T> getObject(Class<T> classType) {
+    T instance = createInstance(calssType);
+    Arrays.stream(classType.getDeclaredFields()).forEach(f -> {
+      if(f.getAnnotation(Inject.class) != null) {
+        Object fieldInstance = createInstance(f.getType());
+        f.setAccessible(true);
+        try {
+          f.set(instance, fieldInstance);
+        } catch (IllegalAccessException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
+    
+    return instance;
+  }
+  
+  private static <T> T createInstance(Class<T> classType) {
+    try {
+      return classType.getConstructor(null).newInstance();    
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
 ```
 
 - classType 에 해당하는 타입의 객체를 만들어 준다.
