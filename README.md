@@ -274,6 +274,70 @@ public class App {
   }
 }
 ```
- 
- 
 
+### 어노테이션과 리플렉션
+ 
+- @Retention: 해당 어노테이션을 언제까지 유지할 것인가? 소스, 클래스, 런타임 
+- @Inherited: 해당 어노테이션을 하위 클래스까지 전달할 것인가? 
+- @Target: 어디에 사용할 수 있는가? 
+
+@Inherited 를 붙이면 Book 클래스에 해당 어노테이션이 붙어있는 경우 MyBook(Book) 을 상속받음 MyBook 도 해당 어노테이션을 상속받게 된다.
+ 
+- 리플렉션 
+ - getAnnotations(): 상속받은 (@Inherit) 어노테이션까지 조회 
+ - getDeclaredAnnotations(): 자기 자신에만 붙어있는 어노테이션 조회 
+  
+
+### 리플레션 : 클래스 정보 수정
+
+- Class   인스턴스   만들기 
+ - Class.newInstance() 는 deprecated 됐으며 이제부터는 
+ - 생성자를 통해서 만들어야 한다. 
+ 
+- 생성자로 인스턴스 만들기 
+ - Constructor.newInstance(params) 
+ 
+ 
+- 필드 값 접근하기/설정하기 
+ - 특정  인스턴스가 가지고 있는 값을 가져오는 것이기  때문에 인스턴스가 필요하다. 
+ - Field.get(object) 
+ - Filed.set(object, value) 
+ - Static 필드를 가져올 때는 object가 없어도 되니까 null을 넘기  된다. 
+ 
+- 메서드 실행하기 
+ - Object Method.invoke(object, params) 
+  
+### 나만의 DI 프레임워크 만들기
+
+- @Inject 라는 어노테이션  만들어서 필드 주입 해주는 컨테이너 서비스 만들기
+
+```java
+public class BookService {
+
+  @Inject
+  BookRepository bookRepository;
+
+}
+```
+
+- ContainerService.java
+
+```java
+public static <T> getObject(T classType)
+```
+
+- classType 에 해당하는 타입의 객체를 만들어 준다.
+- 단, 해당 객체의 필드 중에 @Inject가 있다면, 해당 필드도 같이 만들어 제공한다.
+
+### 주의 사항
+
+- 리플렉션 사용시 주의할 것 
+ - 지나친 사용은 성능 이슈를 야기할 수 있다. 반드시 필요한 경우에만 사용할 것 
+ - 컴파일 타임에 확인되지 않고 런타임 시에만 발생하는 문제를 만들 가능성이 있다. 
+ - 접근 지시자를 무시할 수 있다.
+ 
+- 스프링에서 리플렉션을 사용하는 경우 
+ - 의존성 주입 
+ - MVC 뷰에서 넘어온 데이터를 객체에 바인딩 할 때 
+- 하이버네이트 
+ - @Entity 클래스에 Sette r가 없다면 리플렉션을 사용한다.
