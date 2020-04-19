@@ -207,3 +207,73 @@ public class MasulsaAgent   {
   - ClassPathScanningCandidateComponentProvider -> SimpleMetadataReader(ClassReader 와 Visitor 구현체 사용 하여 메타 데이터를 읽는다.) 
 
 > https://www.youtube.com/watch?v=39kdr1mNZ_s
+
+## 3장 : 스프링은 DI 는 어떻게 동작할까?
+
+```java
+@Service 
+@RequiredArgsConstructor
+public class  BookService   { 
+ 
+  private final BookRepository bookRepository; 
+ 
+} 
+```
+
+어떻게 bookRepository 가 null이 아닐까? 아래에서 그것에 대해서 배워보겠습니다.
+
+### 리플렉션 API : 클래스 정보 조회
+
+- 리플렉션의 시작은 `Class<T>`
+  -  https://docs.oracle.com/javase/8/docs/api/java/lang/Class.html 
+- `Class<T>` 에 접근하는 방법
+  - 모든 클래스를 로딩 한 다음 Class<T>의 인스턴스가 생긴다. `타입.class` 로 접근할 수 있다. 
+  - 모든 인스턴스는 `getClass()` 메소드를 가지고 있다. `인스턴스.getClass()` 로 접근할 수 있다. 
+  - 클래스를 문자열로 읽어오는 방법 
+    - `Class.forName(“FQCN”)` 
+    - 클래스패스에 해당 클래스가 없다면 ClassNotFoundException 이 발생한다.
+- `Class<T>` 를 통해 가져올 수 있는 것들
+  - 필드(목록) 가져오기 
+  - 메소드(목록) 가져오기 
+  - 상위 클래스 가져오기 
+  - 인터페이스(목록) 가져오기 
+  - 어노테이션 가져오기 
+  - 생성자 가져오기 
+ 
+> FQCN : Full Qualified Class Name  
+
+getFields() 메서드는 public 접근 지시자의 필드만 가져온다. getDeclaredFields() 를 써야 다 가져온다.
+  
+```java
+public class App {
+  public static void main(String[] args) {
+    Class<Book> bookClass = book.class;
+    
+    Book book = new Book();
+    Class<? extends Book> aClass = book.getClass();
+  
+  }
+}
+```
+
+- 클래스 필드에 저장된 값을 가져오는 코드
+
+```java
+public class App {
+  public static void main(String[] args) {
+    Class<Book> bookClass = book.class;
+    Book book = new Book();
+    Arrays.stream(bookClass.getDeclaredFields()).forEach(f -> {
+      try {
+        f.setAccessible(true); // private 한 필드의 값도 가져올 수 있게 
+        System.out.printf("%s %s", f, f.get(book));
+      } catch (IllegalAccessException e) {
+        e.printStackTrace();
+      }
+    });
+  }
+}
+```
+ 
+ 
+
