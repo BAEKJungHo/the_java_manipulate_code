@@ -507,10 +507,12 @@ public class BookServiceTest {
 
 > 다이나믹 프록시의 가장 큰 제약사항은, 클래스 기반 프록시를 만들지 못한다. new class[]{인터페이스.class} 무조건 인터페이스여야 한다. 
 
+```
 aaa
 rent: spring
 bbb
 return: spring
+```
 
 위 구조는 유연한 구조가 아님, 그래서 스프링 AOP 등장. 따라서 스프링 AOP 를 프록시 기반 AOP 라 부르는 것임.
 
