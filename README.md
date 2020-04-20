@@ -375,3 +375,122 @@ public class ContainerService {
  - MVC 뷰에서 넘어온 데이터를 객체에 바인딩 할 때 
 - 하이버네이트 
  - @Entity 클래스에 Sette r가 없다면 리플렉션을 사용한다.
+ 
+## 4장 : 다이나믹 프록시
+
+- 스프링 데이터 JPA에서 인터페이스 타입의 인스턴스는 누가 만들어 주는것인가? 
+ - Spring AOP 를 기반으로 동작하며 RepositoryFactorySupport 에서 프록시를 생성한다.
+ 
+> 프록시(Proxy) : 대리자, 비서 라고 생각하면 된다.
+ 
+### 프록시 패턴
+
+- 프록시와 리얼 서브젝트가 공유하는 인터페이스가 있고, 클라이언트는 해당 인터페이스 타입으로 프록시를 사용한다.
+- 클라이언트는 프록시를 거쳐서 리얼 서브젝트를 사용하기 때문에 프록시는 리얼 서브젝트에 대한 접근을 관리하거나 부가기능을 제공하거나, 리턴값을 변경할 수도 있다.
+- 리얼 서브젝트는 자신이 해야할 일만 하면서(SRP) 프록시를 사용해서 부가적인 기능(접근 제한, 로깅, 트랜잭션 등)을 제공할 때 이런 패턴을 주로 사용한다.
+- 원래 하려던 기능을 수행하며 그외의 부가적인 작업(로깅, 인증, 네트워크 통신 등)을 수행하기에 좋다.
+- 비용이 많이 드는 연산(DB 쿼리, 대용량 텍스트 파일 등)을 실제로 필요한 시점에 수행할 수 있다.
+- 사용자 입장에서는 프록시 객체나 실제 객체나 사용법은 유사하므로 사용성이 좋다.
+
+### 다이나믹 프록시 실습
+
+- 런타임에 특정 인터페이스들을 구현하는 클래스 또는 인스턴스를 만드는 기술
+
+- 프록시 인스턴스 만들기
+ - Object Proxy.newPorxyInstance(ClassLoader, Interfaces, InvocationHandler)
+
+```java
+BookService bookService = (BookService) Proxy.newProxyInstance(BookService.class.getClassLoader(), new Class[]{BookService.class},
+new InvocationHandler() {
+  BookService bookService = new DefaultBookService();
+  @Override
+  public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+    if(method.getName().equals("rent")) {
+      System.out.println("aaa");
+      Object invoke = method.invoke(bookService, args);
+      System.out.println("bbb");
+      return invoke;
+    }
+    return method.invoke(bookService, args);
+  }
+});
+```
+
+위 구조는 유연한 구조가 아님, 그래서 스프링 AOP 등장
+
+- 프록시 패턴
+
+```java
+/*
+ * 서브젝트
+ */
+public interface BookService {
+
+}
+
+/*
+ * 리얼 서브젝트
+ */
+public class DefaultBookService implements BookService { 
+  public void rent(Book book) {
+    System.out.println("rent" + book.getTitle());
+  }
+}
+
+/*
+ * 프록시
+ */
+public class BookServiceProxy implements BookService {
+  BookService bookService;
+  
+  public BookServiceProxy(BookService bookService) {
+    this.bookService = bookService;
+  }
+  
+  @Override
+  public void rent(Book book) {
+    System.out.println("aaa");
+    bookService.rent(book);
+    System.out.println("bbb");
+  }
+
+}
+
+/*
+ * 클라이언트
+ */
+public class BookServiceTest {
+  
+  /*
+   * BookService : 서브젝트
+   * BookServiceProxy : 프록시
+   * DefaultBookService : 리얼 서브젝트
+   */
+  BookService bookService = new BookServiceProxy(new DefaultBookService());
+  
+  /*
+   * 결과 
+   * aaa
+   * spring
+   * bbb
+   */
+  @Test
+  public void di() {
+    Book book = new Book();
+    boo.setTitle("spring");
+    bookService.rent(book);
+  }
+  
+}
+```
+
+만약에 프록시 rent 메서드에서 전부다 지우고 System.out.println("aaa") 만 찍는 다면 `모자에서 토끼를 꺼내는 마술`과 동일한 역할을 한다.
+이러한 기능은 접근제한 할 때 사용될 수 있다.
+
+### References.
+
+> https://www.oodesign.com/proxy-pattern.html
+>
+> https://en.wikipedia.org/wiki/Proxy_pattern 
+>
+> https://en.wikipedia.org/wiki/Single_responsibility_principle
