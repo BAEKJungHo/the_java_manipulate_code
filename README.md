@@ -394,31 +394,7 @@ public class ContainerService {
 
 ![Proxy](images/proxy1.JPG)
 
-### 다이나믹 프록시 실습
-
-- 런타임에 특정 인터페이스들을 구현하는 클래스 또는 인스턴스를 만드는 기술
-
-- 프록시 인스턴스 만들기
- - Object Proxy.newPorxyInstance(ClassLoader, Interfaces, InvocationHandler)
-
-```java
-BookService bookService = (BookService) Proxy.newProxyInstance(BookService.class.getClassLoader(), new Class[]{BookService.class},
-new InvocationHandler() {
-  BookService bookService = new DefaultBookService();
-  @Override
-  public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-    if(method.getName().equals("rent")) {
-      System.out.println("aaa");
-      Object invoke = method.invoke(bookService, args);
-      System.out.println("bbb");
-      return invoke;
-    }
-    return method.invoke(bookService, args);
-  }
-});
-```
-
-위 구조는 유연한 구조가 아님, 그래서 스프링 AOP 등장
+### 프록시 패턴 예제
 
 - 프록시 패턴
 
@@ -489,6 +465,130 @@ public class BookServiceTest {
 만약에 프록시 rent 메서드에서 전부다 지우고 System.out.println("aaa") 만 찍는 다면 `모자에서 토끼를 꺼내는 마술`과 동일한 역할을 한다.
 이러한 기능은 접근제한 할 때 사용될 수 있다.
 
+### 다이나믹 프록시 실습
+
+프록시 패턴을 사용하다 보면 코드 중복 문제가 많이 발생할 수 있다. 이것을 해결하기 위한것이 다이나믹 프록시이다.
+
+- 런타임에 특정 인터페이스들을 구현하는 클래스 또는 인스턴스를 만드는 기술
+
+- 프록시 인스턴스 만들기
+ - Object Proxy.newPorxyInstance(ClassLoader, Interfaces, InvocationHandler)
+ 
+```java
+/*
+ * new Class[]{BookService.class} <-- 어떤 인터페이스의 프록시 타입인지 적어야한다.
+ */
+public class BookServiceTest {
+  BookService bookService = (BookService) Proxy.newPorxyInstance(BookService.class.getClassLoader(), new Class[]{BookService.class},
+    new InvocationHandler() {
+       BookService bookService = new DefaultBookService(); // 리얼 서브젝트
+       // 해당 메서드에 리얼 서브젝트가 할일을 제외한 부가적인 기능을 넣거나 하면된다.
+       @Override
+       public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+          // return method.invoke(bookService, args); -> 아무것도 하지않는, 리얼 서브젝트의 기능만 동작하게하는 프록시
+          
+          /*
+           * rent 메서드에만 부가적인 기능 동작하게 하는 프록시 적용하고 싶을 때
+           */
+           if(method.getName().equals("rent")) {
+               System.out.println("aaa"); // 부가적인 기능
+               Object invoke = method.invoke(bookService, args);
+               System.out.println("bbb"); // 부가적인 기능
+               return invoke;
+           }
+           
+           return method.invoke(bookService, args);
+       }
+    }
+});
+```
+
+위 코드 동작 결과 (return 문이 2개라서 2개다 리턴됨). 이제 Proxy 클래스는 필요없음. 동적으로 생성되기 때문이다. 
+
+> 다이나믹 프록시의 가장 큰 제약사항은, 클래스 기반 프록시를 만들지 못한다. new class[]{인터페이스.class} 무조건 인터페이스여야 한다. 
+
+aaa
+rent: spring
+bbb
+return: spring
+
+위 구조는 유연한 구조가 아님, 그래서 스프링 AOP 등장. 따라서 스프링 AOP 를 프록시 기반 AOP 라 부르는 것임.
+
+> 토비의 스프링 3.1 6장 AOP 
+
+### 클래스의 프록시가 필요하다면?
+
+서브 클래스를 만들 수 있는 라이브러리를 사용하여 프록시를 만들 수 있다.
+
+- CGlib
+  - https://github.com/cglib/cglib/wiki
+  - 스프링, 하이버네이트가 사용하는 라이브러리
+  - 버전 호환성이 좋지 않아서 서로 다른 라이브러리 내부에 내장된 형태로 제공되기도 한다.
+  
+```xml
+<dependency> 
+    <groupId>cglib</groupId> 
+    <artifactId>cglib</artifactId> 
+    <version>3.3.0</version> 
+</dependency>
+```           
+
+```java
+public class BookServiceTest {
+  @Test
+  public void di() {
+    MethodInterceptor handler = new MethodInterceptor() {
+      BookService bookService = new BookService();
+      @Override
+      public Object intercept(Object o, Method method, Object[] objects, MethodProxy methodProxy) throws Throwable {
+        return method.invoke(bookService, args);
+      }
+    };
+    // Enhancer 클래스는 CGlib 의 핵심적인 클래스
+    BookService bookService = (BookService) Enhancer.create(BookService.class, handler);
+  }
+}
+```
+
+- ByteBuddy
+  - 바이트 코드 조작 뿐 아니라, 런타임(다이나믹) 프록시를 만들 때도 사용할 수 있다.
+
+- 서브클래스를 만드는 방법의 단점
+  - 상속을 사용하지 못하는 경우 프록시를 만들 수 없다.
+    - private 생성자만 있는 경우
+    - Final 클래스인 경우
+  - 인터페이스가 있을 때는 인터페이스의 프록시를 만들어 사용할 것
+
+```java
+public class BookServiceTest {
+  @Test
+  public void di() {
+    Class<? extends BookService> proxyClass = new ByteBuddy().subclass(BookService.class)
+      .method(named("rent")).intercept(InvocationHandlerAdapter.of(new InvocationHandler9) {
+        BookService bookService = new BookService();
+        @Override
+        public Object invoke(Ojbect proxy, Method method, Object[] args) throws Throwable {
+          System.out.println("aaa");
+          Object invoke = method.invoke(bookService, args);
+          System.out.println("bbb");
+          return invoke;
+        }
+      }))
+      .make().load(BookService.class.getClassLoader()).getLoaded();
+    BookService bookService = proxyClass.getConstructor(null).newInstance();
+    ...
+  }
+}
+```
+
+### 정리
+
+- 다이나믹 프록시 사용되는 예
+  - 스프링 JPA
+  - 스프링 AOP
+  - Mockito
+  - 하이버네이트 lazy initialization
+
 ### References.
 
 > https://www.oodesign.com/proxy-pattern.html
@@ -496,3 +596,5 @@ public class BookServiceTest {
 > https://en.wikipedia.org/wiki/Proxy_pattern 
 >
 > https://en.wikipedia.org/wiki/Single_responsibility_principle
+>
+> http://tutorials.jenkov.com/java-reflection/dynamic-proxies.html 
