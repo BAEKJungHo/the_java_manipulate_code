@@ -643,7 +643,7 @@ public class BookServiceTest {
 어노테이션 프로세서의 장점은 런타임 비용이 제로다. 단점은 기존 클래스 코드를 변경할 때는 약간의 hack 이 필요하다.
 
 - [Processor 인터페이스](https://docs.oracle.com/en/java/javase/11/docs/api/java.compiler/javax/annotation/processing/Processor.html)
-  - 여러 라운드에 거쳐 소스 및 컴파일 된 코드를 처리할 수 있따.
+  - 여러 라운드에 거쳐 소스 및 컴파일 된 코드를 처리할 수 있.
 - 유틸리티
   - AutoService : 서비스 프로바이더 레지스트리 생성기
   - Javapoet : 소스 코드 생성 유틸리티
