@@ -591,6 +591,97 @@ public class BookServiceTest {
   - Mockito
   - 하이버네이트 lazy initialization
 
+## 5장 : 어노테이션 프로세서
+
+어노테이션 프로세서는 컴파일 할때 끼어든다. 
+
+### 롬복은 어떻게 동작할까?
+
+- 롬복(Lombok) 이란?
+  - @Getter, @Setter 등 어노테이션과 어노테이션 프로세서를 제공하여 표준적으로 작성해야 할 코드를 개발자 대신 생성해주는 라이브러리
+
+```xml
+<dependency> 
+    <groupId>org.projectlombok</groupId> 
+    <artifactId>lombok</artifactId> 
+    <version>1.18.8</version> 
+    <scope>provided</scope> 
+</dependency> 
+```
+
+- IntelliJ lombok 플러그인 설치
+- IntelliJ Annotation Processing 옵션 활성화
+
+#### 롬복 동작 원리
+
+컴파일 시점에 [어노테이션 프로세서](https://docs.oracle.com/javase/8/docs/api/javax/annotation/processing/Processor.html)를 사용하여 소스 코드의 [AST(Abstract syntax tree)](https://javaparser.org/inspecting-an-ast/) 를 조작한다.
+
+#### 논란 거리
+
+- 일종의 해킹이다.
+- 공개된 API 가 아닌(non public api) 컴파일러 내부 클래스를 사용하여 기존 소스 코드를 조작한다.
+- 특히 이클립스의 경우엔 java agent 를 사용하여 컴파일러 클래스까지 조작하여 사용한다. 해당 클래스들 역시 공개된 API 가 아니다보니 버전 호환성에 문제가 생길 수 있고, 언제라도 그런 문제가 발생해도 이상하지 않다.
+- 그럼에도 불구하고 엄청난 편리함 때문에 널리 쓰이고 있으며, 대안이 몇가지 있지만 롬복의 모든 기능과 편의성을 대체하진 못하는 현실이다.
+- 대안
+  - AutoValue : https://github.com/google/auto/blob/master/value/userguide/index.md
+  - Immutables : https://immutables.github.io 
+
+#### References.
+
+> https://docs.oracle.com/javase/8/docs/api/javax/annotation/processing/Processor.html 
+>
+> https://projectlombok.org/contributing/lombok-execution-path 
+>
+> https://stackoverflow.com/questions/36563807/can-i-add-a-method-to-a-class-from-a-co mpile-time-annotation 
+>
+> http://jnb.ociweb.com/jnb/jnbJan2010.html#controversy 
+>
+> https://www.oracle.com/technetwork/articles/grid/java-5-features-083037.html
+
+### 어노테이션 프로세서
+
+어노테이션 프로세서의 장점은 런타임 비용이 제로다. 단점은 기존 클래스 코드를 변경할 때는 약간의 hack 이 필요하다.
+
+- [Processor 인터페이스](https://docs.oracle.com/en/java/javase/11/docs/api/java.compiler/javax/annotation/processing/Processor.html)
+  - 여러 라운드에 거쳐 소스 및 컴파일 된 코드를 처리할 수 있따.
+- 유틸리티
+  - AutoService : 서비스 프로바이더 레지스트리 생성기
+  - Javapoet : 소스 코드 생성 유틸리티
+  
+```xml
+<dependency> 
+    <groupId>com.google.auto.service</groupId> 
+    <artifactId>auto-service</artifactId> 
+    <version>1.0-rc6</version> 
+ </dependency> 
+```
+
+```java
+@AutoService(Processor.class) 
+public class MagicMojaProcesso  extend  AbstractProcessor   { 
+ ... 
+} 
+``` 
+
+- 컴파일 시점에 어노테이션 프로세서를 사용하여 META-INF/services/javax.annotation.processor.Processor 파일 자동으로 생성해줌
+
+- ServiceProvider
+  - https://itnext.io/java-service-provider-interface-understanding-it-via-code-30e1dd45a091 
+
+### References.
+
+ > http://hannesdorfmann.com/annotation-processing/annotationprocessing101 
+ >
+ > http://notatube.blogspot.com/2010/12/project-lombok-creating-custom.html 
+ >
+ > https://medium.com/@jintin/annotation-processing-in-java-3621cb05343a 
+ >
+ > https://medium.com/@iammert/annotation-processing-dont-repeat-yourself-generate-you r-code-8425e60c6657 
+ >
+ > https://docs.oracle.com/javase/7/docs/technotes/tools/windows/javac.html#processing 
+
+
+
 ### References.
 
 > https://www.oodesign.com/proxy-pattern.html
