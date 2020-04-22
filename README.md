@@ -288,7 +288,7 @@ public class App {
  - getDeclaredAnnotations(): 자기 자신에만 붙어있는 어노테이션 조회 
   
 
-### 리플레션 : 클래스 정보 수정
+### 리플션 : 클래스 정보 수정
 
 - Class   인스턴스   만들기 
  - Class.newInstance() 는 deprecated 됐으며 이제부터는 
