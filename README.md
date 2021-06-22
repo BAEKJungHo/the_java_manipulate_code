@@ -374,11 +374,11 @@ public class ContainerService {
  - 의존성 주입 
  - MVC 뷰에서 넘어온 데이터를 객체에 바인딩 할 때 
 - 하이버네이트 
- - @Entity 클래스에 Sette r가 없다면 리플렉션을 사용한다.
+ - @Entity 클래스에 Setter 가 없다면 리플렉션을 사용한다.
  
 ## 4장 : 다이나믹 프록시
 
-- 스프링 데이터 JPA에서 인터페이스 타입의 인스턴스는 누가 만들어 주는것인가? 
+- 스프링 데이터 JPA 에서 인터페이스 타입의 인스턴스는 누가 만들어 주는것인가? 
  - Spring AOP 를 기반으로 동작하며 RepositoryFactorySupport 에서 프록시를 생성한다.
  
 > 프록시(Proxy) : 대리자, 비서 라고 생각하면 된다.
